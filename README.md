@@ -142,6 +142,12 @@ npm run schema:drop
 ```
 
 ### Sample Data
+The initial migration includes sample data:
+- Admin user with JWT authentication
+- System settings (siteName, maintenanceMode, etc.)
+- Sample contact entries
+
+**Note**: The migration system is configured to automatically load environment variables from `.env` file using the `dotenv` package.
 
 ## Development
 

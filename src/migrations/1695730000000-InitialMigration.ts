@@ -12,11 +12,11 @@ export class InitialMigration1695730000000 implements MigrationInterface {
         "name" character varying(255),
         "password" character varying(255),
         "profile" jsonb,
-        "isActive" boolean NOT NULL DEFAULT true,
-        "isAdmin" boolean NOT NULL DEFAULT false,
-        "lastLoginAt" TIMESTAMP,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "is_active" boolean NOT NULL DEFAULT true,
+        "is_admin" boolean NOT NULL DEFAULT false,
+        "last_login_at" TIMESTAMP,
+        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_users_id" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_users_email" UNIQUE ("email")
       )
@@ -37,9 +37,9 @@ export class InitialMigration1695730000000 implements MigrationInterface {
         "message" text NOT NULL,
         "status" character varying(50) NOT NULL DEFAULT 'pending',
         "response" text,
-        "respondedAt" TIMESTAMP,
-        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "responded_at" TIMESTAMP,
+        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_contacts_id" PRIMARY KEY ("id")
       )
     `);
@@ -51,10 +51,10 @@ export class InitialMigration1695730000000 implements MigrationInterface {
         "key" character varying(255) NOT NULL,
         "value" jsonb NOT NULL,
         "description" character varying(255),
-        "isPublic" boolean NOT NULL DEFAULT false,
-        "dataType" character varying(100) NOT NULL DEFAULT 'string',
-        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-        "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "is_public" boolean NOT NULL DEFAULT false,
+        "data_type" character varying(100) NOT NULL DEFAULT 'string',
+        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+        "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_settings_id" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_settings_key" UNIQUE ("key")
       )
@@ -69,28 +69,28 @@ export class InitialMigration1695730000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "admin_logs" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-        "adminId" uuid NOT NULL,
+        "admin_id" uuid NOT NULL,
         "action" character varying(100) NOT NULL,
         "resource" character varying(100) NOT NULL,
-        "resourceId" character varying(255),
+        "resource_id" character varying(255),
         "details" jsonb,
-        "ipAddress" character varying(45),
-        "userAgent" character varying(500),
-        "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+        "ip_address" character varying(45),
+        "user_agent" character varying(500),
+        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_admin_logs_id" PRIMARY KEY ("id"),
-        CONSTRAINT "FK_admin_logs_adminId" FOREIGN KEY ("adminId") REFERENCES "users"("id") ON DELETE CASCADE
+        CONSTRAINT "FK_admin_logs_admin_id" FOREIGN KEY ("admin_id") REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
 
     // Insert default admin user
     await queryRunner.query(`
-      INSERT INTO "users" ("email", "name", "isAdmin", "isActive")
+      INSERT INTO "users" ("email", "name", "is_admin", "is_active")
       VALUES ('admin@example.com', 'System Administrator', true, true)
     `);
 
     // Insert default settings
     await queryRunner.query(`
-      INSERT INTO "settings" ("key", "value", "description", "isPublic", "dataType")
+      INSERT INTO "settings" ("key", "value", "description", "is_public", "data_type")
       VALUES 
         ('site_name', '"NestJS Boilerplate"', 'Website name', true, 'string'),
         ('maintenance_mode', 'false', 'Enable maintenance mode', false, 'boolean'),

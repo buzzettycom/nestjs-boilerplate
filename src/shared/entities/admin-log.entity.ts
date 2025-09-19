@@ -14,7 +14,7 @@ export class AdminLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'admin_id' })
   adminId: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -23,22 +23,22 @@ export class AdminLog {
   @Column({ type: 'varchar', length: 100 })
   resource: string; // user, setting, contact, etc.
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'resource_id' })
   resourceId?: string;
 
   @Column({ type: 'jsonb', nullable: true })
   details?: Record<string, any>;
 
-  @Column({ type: 'varchar', length: 45, nullable: true })
+  @Column({ type: 'varchar', length: 45, nullable: true, name: 'ip_address' })
   ipAddress?: string;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
+  @Column({ type: 'varchar', length: 500, nullable: true, name: 'user_agent' })
   userAgent?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'adminId' })
+  @JoinColumn({ name: 'admin_id' })
   admin: User;
 }

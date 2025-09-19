@@ -1,5 +1,9 @@
 import { DataSource } from 'typeorm';
+import { config } from 'dotenv';
 import { User, Contact, Setting, AdminLog } from './src/shared/entities';
+
+// Load environment variables from .env file
+config();
 
 export default new DataSource({
   type: 'postgres',

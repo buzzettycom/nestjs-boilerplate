@@ -22,15 +22,20 @@ export class Setting {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description?: string;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', default: false, name: 'is_public' })
   isPublic: boolean;
 
-  @Column({ type: 'varchar', length: 100, default: 'string' })
+  @Column({
+    type: 'varchar',
+    length: 100,
+    default: 'string',
+    name: 'data_type',
+  })
   dataType: string; // string, number, boolean, object, array
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param, Put } from '@nestjs/common';
 import { ApiService } from './api.service';
+import { LoggingService } from '../shared/logging/logging.service';
 import type {
   LoginCredentials,
   RegisterData,
@@ -9,10 +10,16 @@ import type {
 
 @Controller('api')
 export class ApiController {
-  constructor(private readonly apiService: ApiService) {}
+  private readonly context = ApiController.name;
+
+  constructor(
+    private readonly apiService: ApiService,
+    private readonly loggingService: LoggingService,
+  ) {}
 
   @Get('health')
   getHealth() {
+    this.loggingService.logApiRequest('GET', '/api/health', this.context);
     return this.apiService.getHealth();
   }
 
