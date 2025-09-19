@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthService } from '../shared/auth/auth.service';
 import { DatabaseService } from '../shared/database/database.service';
 import { UtilsService } from '../shared/utils/utils.service';
+import { LoggingService } from '../shared/logging/logging.service';
 import { User, Contact, Setting, AdminLog } from '../shared/entities';
 import type {
   AdminDashboardData,
@@ -14,10 +15,14 @@ import type {
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+  private readonly context = AdminService.name;
+
   constructor(
     private readonly authService: AuthService,
     private readonly databaseService: DatabaseService,
     private readonly utilsService: UtilsService,
+    private readonly loggingService: LoggingService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Contact)
@@ -29,18 +34,41 @@ export class AdminService {
   ) {}
 
   async getDashboardData(): Promise<AdminDashboardData> {
-    // Admin dashboard data logic
-    const totalUsers = await this.userRepository.count();
-    const activeUsers = await this.userRepository.count({
-      where: { isActive: true },
-    });
+    // Using both traditional Logger and LoggingService for demonstration
+    this.logger.log('Getting dashboard data - traditional logger');
+    this.loggingService.logMethodEntry('getDashboardData', this.context);
+    
+    try {
+      // Admin dashboard data logic
+      const totalUsers = await this.userRepository.count();
+      const activeUsers = await this.userRepository.count({
+        where: { isActive: true },
+      });
 
-    return {
-      totalUsers,
-      activeUsers,
-      revenue: 50000, // This would come from a payments table in real app
-      timestamp: this.utilsService.formatDate(new Date()),
-    };
+      const dashboardData = {
+        totalUsers,
+        activeUsers,
+        revenue: 50000, // This would come from a payments table in real app
+        timestamp: this.utilsService.formatDate(new Date()),
+      };
+
+      // Log with metadata using LoggingService
+      this.loggingService.log(
+        'Dashboard data retrieved successfully',
+        this.context,
+        { totalUsers, activeUsers },
+      );
+
+      this.loggingService.logMethodExit('getDashboardData', this.context, dashboardData);
+      return dashboardData;
+    } catch (error) {
+      this.loggingService.error(
+        'Failed to get dashboard data',
+        this.context,
+        error as Error,
+      );
+      throw error;
+    }
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -57,30 +85,41 @@ export class AdminService {
   }
 
   async createUser(userData: UserCreateData): Promise<User> {
-    // Create new user (admin only)
-    const sanitizedEmail = this.utilsService.sanitizeInput(userData.email);
-    if (!this.utilsService.validateEmail(sanitizedEmail)) {
-      throw new Error('Invalid email format');
+    this.logger.log(`Creating new user with email: ${userData.email}`);
+    
+    try {
+      // Create new user (admin only)
+      const sanitizedEmail = this.utilsService.sanitizeInput(userData.email);
+      if (!this.utilsService.validateEmail(sanitizedEmail)) {
+        this.logger.warn(`Invalid email format attempted: ${userData.email}`);
+        throw new Error('Invalid email format');
+      }
+
+      // Check if user already exists
+      const existingUser = await this.userRepository.findOne({
+        where: { email: sanitizedEmail },
+      });
+
+      if (existingUser) {
+        this.logger.warn(`Attempted to create user with existing email: ${sanitizedEmail}`);
+        throw new Error('User already exists');
+      }
+
+      // Create new user
+      const newUser = this.userRepository.create({
+        email: sanitizedEmail,
+        name: userData.name,
+        password: userData.password, // Should be hashed in real app
+        isActive: true,
+      });
+
+      const savedUser = await this.userRepository.save(newUser);
+      this.logger.log(`User created successfully with ID: ${savedUser.id}`);
+      return savedUser;
+    } catch (error) {
+      this.logger.error(`Failed to create user: ${(error as Error)?.message}`, (error as Error)?.stack);
+      throw error;
     }
-
-    // Check if user already exists
-    const existingUser = await this.userRepository.findOne({
-      where: { email: sanitizedEmail },
-    });
-
-    if (existingUser) {
-      throw new Error('User already exists');
-    }
-
-    // Create new user
-    const newUser = this.userRepository.create({
-      email: sanitizedEmail,
-      name: userData.name,
-      password: userData.password, // Should be hashed in real app
-      isActive: true,
-    });
-
-    return this.userRepository.save(newUser);
   }
 
   async updateUser(id: string, userData: UserUpdateData): Promise<User> {

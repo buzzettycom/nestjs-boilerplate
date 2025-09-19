@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuthService } from '../shared/auth/auth.service';
@@ -17,6 +17,8 @@ import type {
 
 @Injectable()
 export class ApiService {
+  private readonly logger = new Logger(ApiService.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly databaseService: DatabaseService,
@@ -36,29 +38,39 @@ export class ApiService {
   }
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    // Public API login logic
-    const { email } = credentials;
+    this.logger.log(`Login attempt for email: ${credentials.email}`);
+    
+    try {
+      // Public API login logic
+      const { email } = credentials;
 
-    if (!this.utilsService.validateEmail(email)) {
-      throw new Error('Invalid email format');
-    }
+      if (!this.utilsService.validateEmail(email)) {
+        this.logger.warn(`Invalid email format in login: ${email}`);
+        throw new Error('Invalid email format');
+      }
 
-    // Find user by email using TypeORM
-    const user = await this.userRepository.findOne({
-      where: { email, isActive: true },
-    });
-
-    if (user) {
-      // Update last login timestamp
-      await this.userRepository.update(user.id, {
-        lastLoginAt: new Date(),
+      // Find user by email using TypeORM
+      const user = await this.userRepository.findOne({
+        where: { email, isActive: true },
       });
 
-      const token = this.authService.generateToken(user);
-      return { token, user };
-    }
+      if (user) {
+        // Update last login timestamp
+        await this.userRepository.update(user.id, {
+          lastLoginAt: new Date(),
+        });
 
-    throw new Error('Invalid credentials');
+        const token = this.authService.generateToken(user);
+        this.logger.log(`Login successful for user: ${user.id}`);
+        return { token, user };
+      }
+
+      this.logger.warn(`Login failed for email: ${email} - user not found`);
+      throw new Error('Invalid credentials');
+    } catch (error) {
+      this.logger.error(`Login failed for ${credentials.email}: ${(error as Error)?.message}`);
+      throw error;
+    }
   }
 
   async register(userData: RegisterData): Promise<User> {
