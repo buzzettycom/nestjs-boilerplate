@@ -17,7 +17,7 @@ export class AdminUsersService {
 
   async getAllUsers(page = 1, limit = 10): Promise<UserListResponse> {
     const skip = (page - 1) * limit;
-    
+
     const [users, total] = await this.userRepository.findAndCount({
       skip,
       take: limit,
@@ -102,7 +102,7 @@ export class AdminUsersService {
     limit = 10,
   ): Promise<UserListResponse> {
     const skip = (page - 1) * limit;
-    
+
     const [users, total] = await this.userRepository
       .createQueryBuilder('user')
       .where('user.email ILIKE :query OR user.name ILIKE :query', {

@@ -10,7 +10,7 @@ export interface AuthConfig {
   apiJwtRefreshPrivateKey: string;
   apiJwtRefreshPublicKey: string;
   apiJwtRefreshExpiresIn: string;
-  
+
   // Admin JWT Keys
   adminJwtPrivateKey: string;
   adminJwtPublicKey: string;
@@ -18,7 +18,7 @@ export interface AuthConfig {
   adminJwtRefreshPrivateKey: string;
   adminJwtRefreshPublicKey: string;
   adminJwtRefreshExpiresIn: string;
-  
+
   // Shared settings
   bcryptRounds: number;
   sessionSecret: string;
@@ -75,19 +75,31 @@ export default registerAs(
     // API JWT Configuration
     apiJwtPrivateKey: getApiPrivateKey(),
     apiJwtPublicKey: getApiPublicKey(),
-    apiJwtExpiresIn: process.env.API_JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h',
-    apiJwtRefreshPrivateKey: process.env.API_JWT_REFRESH_PRIVATE_KEY || getApiPrivateKey(),
-    apiJwtRefreshPublicKey: process.env.API_JWT_REFRESH_PUBLIC_KEY || getApiPublicKey(),
-    apiJwtRefreshExpiresIn: process.env.API_JWT_REFRESH_EXPIRES_IN || process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-    
+    apiJwtExpiresIn:
+      process.env.API_JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h',
+    apiJwtRefreshPrivateKey:
+      process.env.API_JWT_REFRESH_PRIVATE_KEY || getApiPrivateKey(),
+    apiJwtRefreshPublicKey:
+      process.env.API_JWT_REFRESH_PUBLIC_KEY || getApiPublicKey(),
+    apiJwtRefreshExpiresIn:
+      process.env.API_JWT_REFRESH_EXPIRES_IN ||
+      process.env.JWT_REFRESH_EXPIRES_IN ||
+      '7d',
+
     // Admin JWT Configuration
     adminJwtPrivateKey: getAdminPrivateKey(),
     adminJwtPublicKey: getAdminPublicKey(),
-    adminJwtExpiresIn: process.env.ADMIN_JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h',
-    adminJwtRefreshPrivateKey: process.env.ADMIN_JWT_REFRESH_PRIVATE_KEY || getAdminPrivateKey(),
-    adminJwtRefreshPublicKey: process.env.ADMIN_JWT_REFRESH_PUBLIC_KEY || getAdminPublicKey(),
-    adminJwtRefreshExpiresIn: process.env.ADMIN_JWT_REFRESH_EXPIRES_IN || process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-    
+    adminJwtExpiresIn:
+      process.env.ADMIN_JWT_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h',
+    adminJwtRefreshPrivateKey:
+      process.env.ADMIN_JWT_REFRESH_PRIVATE_KEY || getAdminPrivateKey(),
+    adminJwtRefreshPublicKey:
+      process.env.ADMIN_JWT_REFRESH_PUBLIC_KEY || getAdminPublicKey(),
+    adminJwtRefreshExpiresIn:
+      process.env.ADMIN_JWT_REFRESH_EXPIRES_IN ||
+      process.env.JWT_REFRESH_EXPIRES_IN ||
+      '7d',
+
     // Shared Configuration
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
     sessionSecret: process.env.SESSION_SECRET || 'session-secret',

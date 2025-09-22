@@ -91,7 +91,10 @@ export class ApiAuthService {
     return bcrypt.compare(password, hash);
   }
 
-  async validateCredentials(credentials: LoginCredentials, user: User): Promise<boolean> {
+  async validateCredentials(
+    credentials: LoginCredentials,
+    user: User,
+  ): Promise<boolean> {
     if (!user.password) {
       return false;
     }

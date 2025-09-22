@@ -14,11 +14,7 @@ export class LoggingService {
   /**
    * Log an informational message
    */
-  log(
-    message: string,
-    context: string,
-    metadata?: Record<string, any>,
-  ): void {
+  log(message: string, context: string, metadata?: Record<string, any>): void {
     const logger = this.getLogger(context);
     const logMessage = metadata
       ? `${message} | ${JSON.stringify(metadata)}`
@@ -45,11 +41,7 @@ export class LoggingService {
   /**
    * Log a warning message
    */
-  warn(
-    message: string,
-    context: string,
-    metadata?: Record<string, any>,
-  ): void {
+  warn(message: string, context: string, metadata?: Record<string, any>): void {
     const logger = this.getLogger(context);
     const logMessage = metadata
       ? `${message} | ${JSON.stringify(metadata)}`

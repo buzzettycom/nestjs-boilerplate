@@ -85,7 +85,7 @@ export class AuthService {
 
   validateAdminUser(token: string): TokenValidationResult {
     const result = this.validateUser(token);
-    
+
     if (!result.valid || !result.payload?.isAdmin) {
       return {
         valid: false,
