@@ -12,7 +12,7 @@ import type {
 } from './interfaces/auth.interfaces';
 
 @Injectable()
-export class AuthService {
+export class AdminAuthService {
   constructor(
     private readonly configService: ConfigService,
     @Inject('auth') private readonly authConfig: AuthConfig,
@@ -20,7 +20,7 @@ export class AuthService {
 
   validateUser(token: string): TokenValidationResult {
     try {
-      const publicKey = this.authConfig.apiJwtPublicKey;
+      const publicKey = this.authConfig.adminJwtPublicKey;
       const payload = jwt.verify(token, publicKey, {
         algorithms: ['RS256'],
       }) as JwtPayload;
@@ -33,52 +33,6 @@ export class AuthService {
       return {
         valid: false,
         error: error instanceof Error ? error.message : 'Invalid token',
-      };
-    }
-  }
-
-  generateTokenPair(user: User): TokenPair {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      isAdmin: user.isAdmin,
-    };
-
-    const privateKey = this.authConfig.apiJwtPrivateKey;
-    const refreshPrivateKey = this.authConfig.apiJwtRefreshPrivateKey;
-
-    const accessToken = jwt.sign(payload, privateKey, {
-      algorithm: 'RS256',
-      expiresIn: this.authConfig.apiJwtExpiresIn,
-    } as jwt.SignOptions);
-
-    const refreshToken = jwt.sign(payload, refreshPrivateKey, {
-      algorithm: 'RS256',
-      expiresIn: this.authConfig.apiJwtRefreshExpiresIn,
-    } as jwt.SignOptions);
-
-    return {
-      accessToken,
-      refreshToken,
-      expiresIn: this.authConfig.apiJwtExpiresIn,
-    };
-  }
-
-  validateRefreshToken(token: string): TokenValidationResult {
-    try {
-      const publicKey = this.authConfig.apiJwtRefreshPublicKey;
-      const payload = jwt.verify(token, publicKey, {
-        algorithms: ['RS256'],
-      }) as JwtPayload;
-
-      return {
-        valid: true,
-        payload,
-      };
-    } catch (error) {
-      return {
-        valid: false,
-        error: error instanceof Error ? error.message : 'Invalid refresh token',
       };
     }
   }
@@ -96,9 +50,58 @@ export class AuthService {
     return result;
   }
 
+  generateTokenPair(user: User): TokenPair {
+    if (!user.isAdmin) {
+      throw new Error('Admin access required for admin token generation');
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+    };
+
+    const privateKey = this.authConfig.adminJwtPrivateKey;
+    const refreshPrivateKey = this.authConfig.adminJwtRefreshPrivateKey;
+
+    const accessToken = jwt.sign(payload, privateKey, {
+      algorithm: 'RS256',
+      expiresIn: this.authConfig.adminJwtExpiresIn,
+    } as jwt.SignOptions);
+
+    const refreshToken = jwt.sign(payload, refreshPrivateKey, {
+      algorithm: 'RS256',
+      expiresIn: this.authConfig.adminJwtRefreshExpiresIn,
+    } as jwt.SignOptions);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: this.authConfig.adminJwtExpiresIn,
+    };
+  }
+
+  validateRefreshToken(token: string): TokenValidationResult {
+    try {
+      const publicKey = this.authConfig.adminJwtRefreshPublicKey;
+      const payload = jwt.verify(token, publicKey, {
+        algorithms: ['RS256'],
+      }) as JwtPayload;
+
+      return {
+        valid: true,
+        payload,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : 'Invalid refresh token',
+      };
+    }
+  }
+
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = this.authConfig.bcryptRounds;
-    return bcrypt.hash(password, saltRounds);
+    return bcrypt.hash(password, this.authConfig.bcryptRounds);
   }
 
   async comparePassword(password: string, hash: string): Promise<boolean> {
@@ -109,25 +112,26 @@ export class AuthService {
     credentials: LoginCredentials,
     user: User,
   ): Promise<boolean> {
-    if (!user.password) {
+    if (!user.password || !user.isAdmin) {
       return false;
     }
-
     return this.comparePassword(credentials.password, user.password);
   }
 
-  // Legacy method for backward compatibility
   generateToken(user: User): string {
+    if (!user.isAdmin) {
+      throw new Error('Admin access required for admin token generation');
+    }
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       isAdmin: user.isAdmin,
     };
 
-    const privateKey = this.authConfig.apiJwtPrivateKey;
-    return jwt.sign(payload, privateKey, {
+    return jwt.sign(payload, this.authConfig.adminJwtPrivateKey, {
       algorithm: 'RS256',
-      expiresIn: this.authConfig.apiJwtExpiresIn,
+      expiresIn: this.authConfig.adminJwtExpiresIn,
     } as jwt.SignOptions);
   }
 }

@@ -1,4 +1,25 @@
-# NestJS Boilerplate with Modular Architecture
+# NestJS Boilerp| Variable | Description | Default |
+|----------|-------------|---------|
+| `NODE_ENV` | Environment mode | `development` |
+| `PORT` | Main application port | `3000` |
+| `API_PORT` | API service port | `3001` |
+| `ADMIN_PORT` | Admin service port | `3002` |
+| `DB_HOST` | Database host | `localhost` |
+| `DB_PORT` | Database port | `5432` |
+| `DB_USERNAME` | Database username | `postgres` |
+| `DB_PASSWORD` | Database password | - |
+| `DB_DATABASE` | Database name | `nestjs_app` |
+| `API_JWT_PRIVATE_KEY` | RSA private key for API JWT signing | `jwt-api-private.pem` |
+| `API_JWT_PUBLIC_KEY` | RSA public key for API JWT verification | `jwt-api-public.pem` |
+| `API_JWT_EXPIRES_IN` | API access token expiration time | `1h` |
+| `API_JWT_REFRESH_EXPIRES_IN` | API refresh token expiration time | `7d` |
+| `ADMIN_JWT_PRIVATE_KEY` | RSA private key for Admin JWT signing | `jwt-admin-private.pem` |
+| `ADMIN_JWT_PUBLIC_KEY` | RSA public key for Admin JWT verification | `jwt-admin-public.pem` |
+| `ADMIN_JWT_EXPIRES_IN` | Admin access token expiration time | `1h` |
+| `ADMIN_JWT_REFRESH_EXPIRES_IN` | Admin refresh token expiration time | `7d` |
+| `BCRYPT_ROUNDS` | Password hashing rounds | `10` |
+| `SESSION_SECRET` | Session secret key | - |
+| `ADMIN_SECRET` | Admin authentication secret | - |Architecture
 
 A scalable NestJS application featuring modular architecture with feature-based modules, TypeORM integration, JWT RS256 authentication, and environment-based configuration.
 
@@ -46,8 +67,8 @@ A scalable NestJS application featuring modular architecture with feature-based 
 ### Key Features
 - 🏗️ **Modular architecture** with feature-based modules for better organization
 - 📦 **Clean separation of concerns** - each module handles a specific domain
-- 🗄️ **TypeORM integration** with PostgreSQL and snake_case fields
-- 🔐 **JWT RS256 authentication** with RSA key pairs and refresh tokens
+- � **Separate JWT authentication** with different RSA key pairs for API and Admin services
+- �️ **TypeORM integration** with PostgreSQL and snake_case fields
 - ⚙️ **Environment-based configuration** using @nestjs/config
 - 📊 **Database migrations** for schema management
 - 🔒 **Type-safe** with full TypeScript support
@@ -89,13 +110,19 @@ The database follows PostgreSQL best practices with **snake_case** field naming 
 cp .env.example .env
 ```
 
-2. Generate RSA key pair for JWT authentication:
+2. Generate separate RSA key pairs for API and Admin JWT authentication:
 ```bash
-# Generate private key (2048-bit RSA)
-openssl genrsa -out jwt-private.pem 2048
+# Use the provided script to generate all key pairs
+./generate-jwt-keys.sh
 
-# Generate public key from private key
-openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
+# Or generate manually:
+# API JWT keys
+openssl genrsa -out jwt-api-private.pem 2048
+openssl rsa -in jwt-api-private.pem -pubout -out jwt-api-public.pem
+
+# Admin JWT keys
+openssl genrsa -out jwt-admin-private.pem 2048
+openssl rsa -in jwt-admin-private.pem -pubout -out jwt-admin-public.pem
 ```
 
 3. Update `.env` with your configuration:
@@ -113,13 +140,23 @@ DB_USERNAME=postgres
 DB_PASSWORD=your_password
 DB_DATABASE=nestjs_app
 
-# Authentication Configuration (RSA Keys for JWT RS256)
-# The system will automatically load jwt-private.pem and jwt-public.pem
+# API JWT Configuration (Separate keys for API service)
+# The system will automatically load jwt-api-private.pem and jwt-api-public.pem
 # Or you can set them as environment variables:
-# JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-# JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
-JWT_EXPIRES_IN=1h
-JWT_REFRESH_EXPIRES_IN=7d
+# API_JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+# API_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+API_JWT_EXPIRES_IN=1h
+API_JWT_REFRESH_EXPIRES_IN=7d
+
+# Admin JWT Configuration (Separate keys for Admin service)
+# The system will automatically load jwt-admin-private.pem and jwt-admin-public.pem
+# Or you can set them as environment variables:
+# ADMIN_JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+# ADMIN_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+ADMIN_JWT_EXPIRES_IN=1h
+ADMIN_JWT_REFRESH_EXPIRES_IN=7d
+
+# Shared Configuration
 BCRYPT_ROUNDS=10
 SESSION_SECRET=your-session-secret-key
 ADMIN_SECRET=your-admin-secret-key
@@ -237,10 +274,17 @@ The initial migration includes sample data:
 
 ## JWT Authentication System
 
-This boilerplate implements a robust JWT authentication system using **RS256 algorithm** with RSA key pairs for enhanced security.
+This boilerplate implements a robust JWT authentication system using **RS256 algorithm** with separate RSA key pairs for enhanced security between API and Admin services.
+
+### Separate Authentication Systems
+- **API Service**: Uses dedicated API JWT keys for public user authentication
+- **Admin Service**: Uses separate Admin JWT keys for administrative access
+- **Enhanced Security**: Complete isolation between API and Admin authentication systems
+- **Independent Key Rotation**: Update keys for each service independently
 
 ### Authentication Features
 - **RS256 Algorithm**: Asymmetric encryption using RSA key pairs
+- **Separate Key Pairs**: Different keys for API and Admin services
 - **Access & Refresh Tokens**: Separate tokens with different expiration times
 - **Password Security**: Bcrypt hashing with configurable rounds
 - **Admin Authorization**: Separate validation for administrative users
@@ -248,26 +292,38 @@ This boilerplate implements a robust JWT authentication system using **RS256 alg
 
 ### Key Generation
 ```bash
-# Generate 2048-bit RSA private key
-openssl genrsa -out jwt-private.pem 2048
+# Generate all key pairs using the provided script
+./generate-jwt-keys.sh
 
-# Generate corresponding public key
-openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
+# Or generate manually:
+# API JWT keys (2048-bit RSA)
+openssl genrsa -out jwt-api-private.pem 2048
+openssl rsa -in jwt-api-private.pem -pubout -out jwt-api-public.pem
+
+# Admin JWT keys (2048-bit RSA)
+openssl genrsa -out jwt-admin-private.pem 2048
+openssl rsa -in jwt-admin-private.pem -pubout -out jwt-admin-public.pem
 
 # View key contents (for environment variables)
-cat jwt-private.pem
-cat jwt-public.pem
+cat jwt-api-private.pem
+cat jwt-admin-private.pem
 ```
 
 ### AuthService Methods
 ```typescript
-// Token Management
-generateTokenPair(user: User): TokenPair
+// API Authentication Service (ApiAuthService)
+generateTokenPair(user: User): TokenPair  // API tokens
 validateUser(token: string): TokenValidationResult
 validateRefreshToken(token: string): TokenValidationResult
-validateAdminUser(token: string): TokenValidationResult
+hashPassword(password: string): Promise<string>
+comparePassword(password: string, hash: string): Promise<boolean>
+validateCredentials(credentials: LoginCredentials, user: User): Promise<boolean>
 
-// Password Security
+// Admin Authentication Service (AdminAuthService)
+generateTokenPair(user: User): TokenPair  // Admin tokens (requires isAdmin)
+validateUser(token: string): TokenValidationResult
+validateAdminUser(token: string): TokenValidationResult  // Admin-specific validation
+validateRefreshToken(token: string): TokenValidationResult
 hashPassword(password: string): Promise<string>
 comparePassword(password: string, hash: string): Promise<boolean>
 validateCredentials(credentials: LoginCredentials, user: User): Promise<boolean>
@@ -291,11 +347,14 @@ interface TokenPair {
 ```
 
 ### Security Benefits
+- **Service Isolation**: Complete separation between API and Admin authentication
 - **Asymmetric Keys**: Public key for verification, private key for signing
+- **Independent Key Management**: Rotate keys for each service independently
 - **Token Separation**: Different keys for access and refresh tokens
 - **No Shared Secrets**: Eliminates risks associated with symmetric keys
 - **Signature Verification**: Cryptographic proof of token authenticity
 - **Configurable Expiration**: Separate lifetimes for different token types
+- **Admin Validation**: Enhanced security checks for administrative access
 
 ## Development
 
@@ -477,7 +536,7 @@ npm run test:e2e
 
 ## Security Considerations
 
-- **Generate new RSA keys** for production environments
+- **Generate separate RSA keys** for API and Admin services in production environments
 - **Never commit RSA keys** to version control (they're in .gitignore)
 - Use **strong database passwords** and enable SSL/TLS
 - Enable **HTTPS in production** for secure token transmission
@@ -486,8 +545,10 @@ npm run test:e2e
 - Implement **rate limiting** to prevent brute force attacks
 - Use **environment variables** for all secrets
 - Store RSA keys securely (consider using key management services)
-- Regularly **rotate JWT keys** in production
+- Regularly **rotate JWT keys** independently for each service
 - Use strong **session and admin secrets**
+- **Monitor token usage** and implement proper logging for security events
+- Consider **shorter token lifetimes** for Admin services in production
 
 ## License
 

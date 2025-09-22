@@ -12,7 +12,7 @@ import type {
 } from './interfaces/auth.interfaces';
 
 @Injectable()
-export class AuthService {
+export class ApiAuthService {
   constructor(
     private readonly configService: ConfigService,
     @Inject('auth') private readonly authConfig: AuthConfig,
@@ -83,40 +83,21 @@ export class AuthService {
     }
   }
 
-  validateAdminUser(token: string): TokenValidationResult {
-    const result = this.validateUser(token);
-    
-    if (!result.valid || !result.payload?.isAdmin) {
-      return {
-        valid: false,
-        error: 'Admin access required',
-      };
-    }
-
-    return result;
-  }
-
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = this.authConfig.bcryptRounds;
-    return bcrypt.hash(password, saltRounds);
+    return bcrypt.hash(password, this.authConfig.bcryptRounds);
   }
 
   async comparePassword(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash);
   }
 
-  async validateCredentials(
-    credentials: LoginCredentials,
-    user: User,
-  ): Promise<boolean> {
+  async validateCredentials(credentials: LoginCredentials, user: User): Promise<boolean> {
     if (!user.password) {
       return false;
     }
-
     return this.comparePassword(credentials.password, user.password);
   }
 
-  // Legacy method for backward compatibility
   generateToken(user: User): string {
     const payload: JwtPayload = {
       sub: user.id,
@@ -124,8 +105,7 @@ export class AuthService {
       isAdmin: user.isAdmin,
     };
 
-    const privateKey = this.authConfig.apiJwtPrivateKey;
-    return jwt.sign(payload, privateKey, {
+    return jwt.sign(payload, this.authConfig.apiJwtPrivateKey, {
       algorithm: 'RS256',
       expiresIn: this.authConfig.apiJwtExpiresIn,
     } as jwt.SignOptions);

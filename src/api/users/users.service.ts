@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuthService } from '../../shared/auth/auth.service';
+import { ApiAuthService } from '../../shared/auth/api-auth.service';
 import { UtilsService } from '../../shared/utils/utils.service';
 import { User } from '../../shared/entities';
 import type {
@@ -21,7 +21,7 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
-    private readonly authService: AuthService,
+    private readonly authService: ApiAuthService,
     private readonly utilsService: UtilsService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
