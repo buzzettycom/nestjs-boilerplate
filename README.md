@@ -80,23 +80,11 @@ Your API will be running at:
 
 ---
 
-## 📋 Environment Variables
+
+### 📋  Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `development` |
-| `PORT` | Main application port | `3000` |
-| `API_PORT` | API service port | `3001` |
-| `ADMIN_PORT` | Admin service port | `3002` |
-| `DB_HOST` | Database host | `localhost` |
-| `DB_PORT` | Database port | `5432` |
-| `DB_USERNAME` | Database username | `postgres` |
-| `DB_PASSWORD` | Database password | - |
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------||
 | `NODE_ENV` | Environment mode | `development` |
 | `PORT` | Main application port | `3000` |
 | `API_PORT` | API service port | `3001` |
