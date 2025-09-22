@@ -1,7 +1,15 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcryptjs';
 import type { AuthConfig } from '../../config/auth.config';
 import type { User } from '../interfaces';
+import type {
+  JwtPayload,
+  TokenPair,
+  LoginCredentials,
+  TokenValidationResult,
+} from './interfaces/auth.interfaces';
 
 @Injectable()
 export class AuthService {
@@ -10,35 +18,116 @@ export class AuthService {
     @Inject('auth') private readonly authConfig: AuthConfig,
   ) {}
 
-  validateUser(token: string): boolean {
-    // Shared authentication logic using JWT secret from config
-    const jwtSecret = this.configService.get<string>('auth.jwtSecret');
-    console.log(
-      `Validating token with secret: ${jwtSecret?.substring(0, 10)}...`,
-    );
+  validateUser(token: string): TokenValidationResult {
+    try {
+      const publicKey = this.authConfig.jwtPublicKey;
+      const payload = jwt.verify(token, publicKey, {
+        algorithms: ['RS256'],
+      }) as JwtPayload;
 
-    // Mock validation - replace with actual JWT validation
-    return token.length > 0;
+      return {
+        valid: true,
+        payload,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : 'Invalid token',
+      };
+    }
   }
 
+  generateTokenPair(user: User): TokenPair {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+    };
+
+    const privateKey = this.authConfig.jwtPrivateKey;
+    const refreshPrivateKey = this.authConfig.jwtRefreshPrivateKey;
+
+    const accessToken = jwt.sign(payload, privateKey, {
+      algorithm: 'RS256',
+      expiresIn: this.authConfig.jwtExpiresIn,
+    } as jwt.SignOptions);
+
+    const refreshToken = jwt.sign(payload, refreshPrivateKey, {
+      algorithm: 'RS256',
+      expiresIn: this.authConfig.jwtRefreshExpiresIn,
+    } as jwt.SignOptions);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: this.authConfig.jwtExpiresIn,
+    };
+  }
+
+  validateRefreshToken(token: string): TokenValidationResult {
+    try {
+      const publicKey = this.authConfig.jwtRefreshPublicKey;
+      const payload = jwt.verify(token, publicKey, {
+        algorithms: ['RS256'],
+      }) as JwtPayload;
+
+      return {
+        valid: true,
+        payload,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : 'Invalid refresh token',
+      };
+    }
+  }
+
+  validateAdminUser(token: string): TokenValidationResult {
+    const result = this.validateUser(token);
+    
+    if (!result.valid || !result.payload?.isAdmin) {
+      return {
+        valid: false,
+        error: 'Admin access required',
+      };
+    }
+
+    return result;
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = this.authConfig.bcryptRounds;
+    return bcrypt.hash(password, saltRounds);
+  }
+
+  async comparePassword(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
+  }
+
+  async validateCredentials(
+    credentials: LoginCredentials,
+    user: User,
+  ): Promise<boolean> {
+    if (!user.password) {
+      return false;
+    }
+
+    return this.comparePassword(credentials.password, user.password);
+  }
+
+  // Legacy method for backward compatibility
   generateToken(user: User): string {
-    // Shared token generation logic using config
-    const jwtSecret = this.configService.get<string>('auth.jwtSecret');
-    const expiresIn = this.configService.get<string>('auth.jwtExpiresIn');
-    console.log(
-      `Generating token for user ${user.id}, expires in: ${expiresIn}`,
-    );
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      isAdmin: user.isAdmin,
+    };
 
-    // Mock token generation - replace with actual JWT generation
-    return `token-${jwtSecret?.substring(0, 5)}-${user.id}-${Date.now()}`;
-  }
-
-  validateAdminUser(token: string): boolean {
-    // Admin-specific validation logic using admin secret
-    const adminSecret = this.configService.get<string>('auth.adminSecret');
-    console.log(
-      `Admin validation with secret: ${adminSecret?.substring(0, 10)}...`,
-    );
-    return this.validateUser(token);
+    const privateKey = this.authConfig.jwtPrivateKey;
+    return jwt.sign(payload, privateKey, {
+      algorithm: 'RS256',
+      expiresIn: this.authConfig.jwtExpiresIn,
+    } as jwt.SignOptions);
   }
 }

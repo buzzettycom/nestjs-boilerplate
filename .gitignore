@@ -9,6 +9,13 @@
 .env.production
 .env.staging
 
+# RSA Keys for JWT (DO NOT COMMIT TO VERSION CONTROL)
+*.pem
+jwt-private.pem
+jwt-public.pem
+private.key
+public.key
+
 # Logs
 logs
 *.log

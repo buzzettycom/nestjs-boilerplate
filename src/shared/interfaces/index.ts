@@ -3,7 +3,11 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  password?: string;
   profile?: Record<string, any>;
+  isActive?: boolean;
+  isAdmin?: boolean;
+  lastLoginAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -18,6 +22,31 @@ export interface UserUpdateData {
   name?: string;
   email?: string;
   profile?: Record<string, any>;
+}
+
+// DTOs for Admin User Management
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;
+}
+
+export interface UpdateUserDto {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;
+  isActive?: boolean;
+}
+
+export interface UserListResponse {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 // Authentication interfaces
@@ -62,8 +91,16 @@ export interface PublicDataResponse {
 export interface AdminDashboardData {
   totalUsers: number;
   activeUsers: number;
-  revenue: number;
-  timestamp: string;
+  adminUsers?: number;
+  totalContacts?: number;
+  pendingContacts?: number;
+  totalSettings?: number;
+  recentActivities?: any[];
+  systemStatus?: string;
+  uptime?: number;
+  lastUpdated?: Date;
+  revenue?: number;
+  timestamp?: string;
 }
 
 export interface AdminSettings {

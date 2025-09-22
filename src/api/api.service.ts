@@ -1,16 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuthService } from '../shared/auth/auth.service';
 import { DatabaseService } from '../shared/database/database.service';
 import { UtilsService } from '../shared/utils/utils.service';
-import { User, Contact } from '../shared/entities';
+import { Contact } from '../shared/entities';
 import type {
   HealthResponse,
-  LoginCredentials,
-  LoginResponse,
-  RegisterData,
-  UserUpdateData,
   PublicDataResponse,
   ContactData,
 } from '../shared/interfaces';
@@ -20,11 +15,8 @@ export class ApiService {
   private readonly logger = new Logger(ApiService.name);
 
   constructor(
-    private readonly authService: AuthService,
     private readonly databaseService: DatabaseService,
     private readonly utilsService: UtilsService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     @InjectRepository(Contact)
     private readonly contactRepository: Repository<Contact>,
   ) {}
@@ -35,101 +27,6 @@ export class ApiService {
       timestamp: this.utilsService.formatDate(new Date()),
       version: '1.0.0',
     };
-  }
-
-  async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    this.logger.log(`Login attempt for email: ${credentials.email}`);
-    
-    try {
-      // Public API login logic
-      const { email } = credentials;
-
-      if (!this.utilsService.validateEmail(email)) {
-        this.logger.warn(`Invalid email format in login: ${email}`);
-        throw new Error('Invalid email format');
-      }
-
-      // Find user by email using TypeORM
-      const user = await this.userRepository.findOne({
-        where: { email, isActive: true },
-      });
-
-      if (user) {
-        // Update last login timestamp
-        await this.userRepository.update(user.id, {
-          lastLoginAt: new Date(),
-        });
-
-        const token = this.authService.generateToken(user);
-        this.logger.log(`Login successful for user: ${user.id}`);
-        return { token, user };
-      }
-
-      this.logger.warn(`Login failed for email: ${email} - user not found`);
-      throw new Error('Invalid credentials');
-    } catch (error) {
-      this.logger.error(`Login failed for ${credentials.email}: ${(error as Error)?.message}`);
-      throw error;
-    }
-  }
-
-  async register(userData: RegisterData): Promise<User> {
-    // Public API registration logic
-    const sanitizedEmail = this.utilsService.sanitizeInput(userData.email);
-
-    if (!this.utilsService.validateEmail(sanitizedEmail)) {
-      throw new Error('Invalid email format');
-    }
-
-    // Check if user already exists
-    const existingUser = await this.userRepository.findOne({
-      where: { email: sanitizedEmail },
-    });
-
-    if (existingUser) {
-      throw new Error('User already exists');
-    }
-
-    // Create new user
-    const newUser = this.userRepository.create({
-      email: sanitizedEmail,
-      name: userData.name,
-      isActive: true,
-    });
-
-    return this.userRepository.save(newUser);
-  }
-
-  async getProfile(id: string): Promise<User | null> {
-    // Get user profile (public API)
-    return this.userRepository.findOne({
-      where: { id, isActive: true },
-      select: ['id', 'email', 'name', 'profile', 'createdAt'],
-    });
-  }
-
-  async updateProfile(id: string, profileData: UserUpdateData): Promise<User> {
-    // Update user profile (public API)
-    const user = await this.userRepository.findOne({
-      where: { id, isActive: true },
-    });
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Update user data
-    await this.userRepository.update(id, {
-      name: profileData.name,
-      profile: profileData.profile,
-    });
-
-    const updatedUser = await this.userRepository.findOne({ where: { id } });
-    if (!updatedUser) {
-      throw new Error('Failed to retrieve updated user');
-    }
-
-    return updatedUser;
   }
 
   getPublicData(): PublicDataResponse {

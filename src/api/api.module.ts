@@ -3,13 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ApiController } from './api.controller';
 import { ApiService } from './api.service';
 import { SharedModule } from '../shared/shared.module';
-import { User, Contact } from '../shared/entities';
+import { UsersModule } from './users/users.module';
+import { Contact } from '../shared/entities';
 
 @Module({
-  imports: [
-    SharedModule,
-    TypeOrmModule.forFeature([User, Contact]),
-  ],
+  imports: [SharedModule, TypeOrmModule.forFeature([Contact]), UsersModule],
   controllers: [ApiController],
   providers: [ApiService],
   exports: [ApiService],
